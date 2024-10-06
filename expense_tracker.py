@@ -4,16 +4,17 @@ from decimal import Decimal
 from enum import Enum
 from typing import Iterable
 
+import humanize
 from pydantic import BaseModel
 
 from currency_converter import CurrencyConverter
 
 
 class Currency(Enum):
-    RUB = "RUB"
-    USD = "USD"
-    EUR = "EUR"
-    TENGE = "TENGE"
+    RUB = "₽"
+    USD = "$"
+    EUR = "€"
+    TENGE = "₸"
 
 
 class MoneyValue(BaseModel):
@@ -21,7 +22,7 @@ class MoneyValue(BaseModel):
     currency: Currency
 
     def __str__(self):
-        return f"{float(self.amount):,.2f} {self.currency.value}"
+        return f"{self.currency.value}{float(self.amount):,.2f}"
 
 
 class Charge(BaseModel):
@@ -101,7 +102,7 @@ class UpdatableCurrencyConverter(ICurrencyConverter):
     ) -> Decimal:
         return Decimal(
             self._currency_converter.convert(
-                float(amount), from_currency.value, to_currency.value, date=self._date
+                float(amount), from_currency.name, to_currency.name, date=self._date
             )
         )
 
@@ -148,3 +149,31 @@ class ExpenseSummary:
                 )
             )
         return result
+
+
+class ExpensePlotter:
+    def pie(self, charges: list[Charge], period: timedelta):
+        import matplotlib.pyplot as plt
+
+        expenses = [float(charge.money_value.amount) for charge in charges]
+
+        plt.pie(expenses, labels=list(map(str, charges)),
+                autopct='%1.1f%%', startangle=140)
+
+        plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        plt.title(f'Expenses over {humanize.naturaldelta(period)}')
+        plt.show()
+
+    def interractive_barplot(self, charges: list[Charge], currency: Currency, period: timedelta):
+        import plotly.express as px
+
+        labels = [charge.description for charge in charges]
+        expenses = [charge.money_value.amount for charge in charges]
+
+        fig = px.bar(
+            x=labels, y=expenses, text=list(map(str, charges)),
+            labels={'x': 'Categories', 'y': f'Charges ({currency.value})'},
+        )
+        fig.update_traces(textposition='outside')
+        fig.update_layout(title=f'Charges over {humanize.naturaldelta(period)}', yaxis_tickprefix=currency.value)
+        fig.show()

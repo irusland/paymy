@@ -8,6 +8,8 @@ import humanize
 from pydantic import BaseModel
 
 from currency_converter import CurrencyConverter
+import plotly.express as px
+import matplotlib.pyplot as plt
 
 
 class Currency(Enum):
@@ -153,27 +155,31 @@ class ExpenseSummary:
 
 class ExpensePlotter:
     def pie(self, charges: list[Charge], period: timedelta):
-        import matplotlib.pyplot as plt
-
         expenses = [float(charge.money_value.amount) for charge in charges]
 
-        plt.pie(expenses, labels=list(map(str, charges)),
-                autopct='%1.1f%%', startangle=140)
+        plt.pie(
+            expenses, labels=list(map(str, charges)), autopct="%1.1f%%", startangle=140
+        )
 
-        plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        plt.title(f'Expenses over {humanize.naturaldelta(period)}')
+        plt.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
+        plt.title(f"Expenses over {humanize.naturaldelta(period)}")
         plt.show()
 
-    def interractive_barplot(self, charges: list[Charge], currency: Currency, period: timedelta):
-        import plotly.express as px
-
+    def interractive_barplot(
+        self, charges: list[Charge], currency: Currency, period: timedelta
+    ):
         labels = [charge.description for charge in charges]
         expenses = [charge.money_value.amount for charge in charges]
 
         fig = px.bar(
-            x=labels, y=expenses, text=list(map(str, charges)),
-            labels={'x': 'Categories', 'y': f'Charges ({currency.value})'},
+            x=labels,
+            y=expenses,
+            text=list(map(str, charges)),
+            labels={"x": "Categories", "y": f"Charges ({currency.value})"},
         )
-        fig.update_traces(textposition='outside')
-        fig.update_layout(title=f'Charges over {humanize.naturaldelta(period)}', yaxis_tickprefix=currency.value)
+        fig.update_traces(textposition="outside")
+        fig.update_layout(
+            title=f"Charges over {humanize.naturaldelta(period)}",
+            yaxis_tickprefix=currency.value,
+        )
         fig.show()

@@ -4,7 +4,8 @@ from expense_tracker import (
     PaymentTracker,
     UpdatableCurrencyConverter,
     ExpenseSummary,
-    Currency, ExpensePlotter,
+    Currency,
+    ExpensePlotter,
 )
 
 try:
